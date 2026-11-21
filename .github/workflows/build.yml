@@ -1,20 +1,45 @@
-name: Build MultiMC
+name: Windows Qt Build
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Download source
-  uses: actions/checkout@v4
-  with:
-    submodules: recursive
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          submodules: recursive
 
-      - name: Inspect repository
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '5.15.2'
+          host: windows
+          target: desktop
+          arch: win64_mingw81
+
+      - name: Configure project
         shell: pwsh
         run: |
-          Write-Host "Repository downloaded"
-          Get-ChildItem
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compile
+        run: cmake --build build --parallel 2
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build
+          path: build/
+          if-no-files-found: error
