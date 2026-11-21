@@ -1,4 +1,4 @@
-name: Windows Qt Build
+name: Windows 64-bit Qt Build
 
 on:
   workflow_dispatch:
@@ -8,13 +8,12 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          ref: develop
           submodules: recursive
 
       - name: Install CMake and Ninja
@@ -23,12 +22,12 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '5.15.2'
+          version: '6.8.3'
           host: windows
           target: desktop
-          arch: win64_mingw81
+          arch: win64_mingw
 
-      - name: Configure project
+      - name: Configure
         shell: pwsh
         run: |
           cmake -S . -B build -G Ninja `
@@ -37,9 +36,12 @@ jobs:
       - name: Compile
         run: cmake --build build --parallel 2
 
-      - name: Upload build output
+      - name: Package
+        run: cmake --install build --prefix package
+
+      - name: Upload executable package
         uses: actions/upload-artifact@v4
         with:
-          name: Windows-Build
-          path: build/
+          name: Windows-64-bit-Build
+          path: package/
           if-no-files-found: error
